@@ -1,0 +1,22 @@
+
+{
+  "dev": [
+    {
+      "version": "1a_2025"
+    }
+  ],
+
+  "requirements": [
+    {
+      "name": "solpy.py",
+      "source": "https://None"
+    }
+  ],
+
+  "python_requirements": [
+    {
+      "name": "dearpygui",
+      "source": "https://None"
+    }
+  ]
+}
