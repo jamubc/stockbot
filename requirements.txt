@@ -1,5 +1,5 @@
-cryptography==44.0.0
-dearpygui==1.10.0
-Requests==2.32.3
-solana==0.36.2
-solders==0.23.0
+cryptography>=44.0.0
+dearpygui>=1.10.1
+requests>=2.32.3
+solana>=0.36.2
+solders>=0.23.0
