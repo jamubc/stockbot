@@ -5,18 +5,18 @@
       "version": "1a_2025"
     }
   ],
-
   "requirements": [
     {
       "name": "solpy.py",
-      "source": "https://None"
+      "source": "none",
+      "description": "Solana network interface module"
     }
   ],
-
   "python_requirements": [
     {
       "name": "dearpygui",
-      "source": "https://None"
+      "source": "none",
+      "description": "GUI framework for the applications"
     }
   ]
 }
