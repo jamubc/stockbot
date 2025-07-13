@@ -70,7 +70,27 @@ The application uses a `config.json` file that can be automatically downloaded f
 - `SOLANA_USERNAME`: Override default authentication username
 - `SOLANA_PASSWORD`: Override default authentication password
 
+## Testing
+
+You can verify the installation and functionality by running the test script:
+
+```bash
+python test_stockbot.py
+```
+
+This will check:
+- File structure integrity
+- Configuration validity  
+- Module imports (where possible)
+- Security function functionality
+
 ## Development
+
+For development work, install additional dependencies:
+
+```bash
+pip install -r requirements-dev.txt
+```
 
 ### Code Structure
 

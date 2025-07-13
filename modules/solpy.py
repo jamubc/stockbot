@@ -24,14 +24,31 @@ except ImportError:
         Keypair = None
 from cryptography.fernet import Fernet
 
+# Import security utilities
+try:
+    from utils.security import validate_solana_address, sanitize_input, validate_file_path, get_safe_env_var
+except ImportError:
+    # Fallback definitions if utils module not available
+    def validate_solana_address(address: str) -> bool:
+        return bool(address and len(address) >= 32 and len(address) <= 44)
+    
+    def sanitize_input(input_str: str, max_length: int = 1000) -> str:
+        return str(input_str)[:max_length].strip() if input_str else ""
+    
+    def validate_file_path(file_path: str) -> bool:
+        return bool(file_path and '..' not in file_path)
+    
+    def get_safe_env_var(var_name: str, default: str = "") -> str:
+        return os.getenv(var_name, default)
+
 VERSION_ = "Solana Networker (1a_2025)"
 
 # ---------------------------
 # Configuration Constants
 # ---------------------------
 KEY_FILE = "wallet_key.key"
-DEFAULT_USERNAME = os.getenv("SOLANA_USERNAME", "admin")
-DEFAULT_PASSWORD = os.getenv("SOLANA_PASSWORD", "admin")
+DEFAULT_USERNAME = get_safe_env_var("SOLANA_USERNAME", "admin")
+DEFAULT_PASSWORD = get_safe_env_var("SOLANA_PASSWORD", "admin")
 SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
 LAMPORTS_PER_SOL = 1e9
 
@@ -91,8 +108,8 @@ def authenticate_user():
     Returns:
         bool: True if authentication successful, False otherwise
     """
-    username = dpg.get_value("username")
-    password = dpg.get_value("password")
+    username = sanitize_input(dpg.get_value("username"), 50)
+    password = sanitize_input(dpg.get_value("password"), 50)
     
     # In production, this should use proper authentication mechanism
     # Consider using environment variables or external auth service
@@ -117,18 +134,8 @@ def validate_wallet_address(address: str) -> bool:
     Returns:
         bool: True if valid, False otherwise
     """
-    if not address or not isinstance(address, str):
-        return False
-    
-    # Basic validation for Solana address format
-    if len(address) < 32 or len(address) > 44:
-        return False
-    
-    try:
-        Pubkey.from_string(address)
-        return True
-    except Exception:
-        return False
+    # Use enhanced validation from security utils
+    return validate_solana_address(sanitize_input(address, 50))
 
 def validate_amount(amount_str: str) -> tuple[bool, float]:
     """
@@ -288,8 +295,8 @@ def check_balance(sender, app_data):
         dpg.set_value("result_text", "Please check the checkbox to connect to the network")
         return
         
-    wallet_address = dpg.get_value("wallet_input").strip()
-    token_address = dpg.get_value("token_input").strip()
+    wallet_address = sanitize_input(dpg.get_value("wallet_input"), 50).strip()
+    token_address = sanitize_input(dpg.get_value("token_input"), 50).strip()
     
     # Validate wallet address
     if not wallet_address:
@@ -431,10 +438,15 @@ def import_wallet_callback(sender, app_data):
         sender: The widget that triggered the callback
         app_data: Additional data from the callback
     """
-    file_path = dpg.get_value("wallet_file_path").strip()
+    file_path = sanitize_input(dpg.get_value("wallet_file_path"), 200).strip()
     
     if not file_path:
         dpg.set_value("result_text", "Please enter a file path")
+        return
+    
+    # Validate file path for security
+    if not validate_file_path(file_path):
+        dpg.set_value("result_text", "Invalid or unsafe file path")
         return
         
     if not os.path.exists(file_path):
@@ -451,13 +463,14 @@ def import_wallet_callback(sender, app_data):
             dpg.set_value("result_text", f"Invalid wallet file. Required fields: {required_fields}")
             return
             
-        # Validate wallet address
+        # Sanitize and validate wallet address
+        wallet_data["address"] = sanitize_input(wallet_data["address"], 50)
         if not validate_wallet_address(wallet_data["address"]):
             dpg.set_value("result_text", "Invalid wallet address in file")
             return
             
         # Encrypt private key if not already encrypted
-        name = wallet_data.get("name", f"wallet{len(wallets)+1}")
+        name = sanitize_input(wallet_data.get("name", f"wallet{len(wallets)+1}"), 50)
         if "private_key_encrypted" not in wallet_data:
             wallet_data["private_key"] = encrypt_private_key(wallet_data["private_key"])
             
@@ -481,8 +494,8 @@ def send_transaction(sender, app_data):
         sender: The widget that triggered the callback
         app_data: Additional data from the callback
     """
-    dest_address = dpg.get_value("destination_input").strip()
-    amount_str = dpg.get_value("amount_input").strip()
+    dest_address = sanitize_input(dpg.get_value("destination_input"), 50).strip()
+    amount_str = sanitize_input(dpg.get_value("amount_input"), 20).strip()
     
     if not dest_address or not amount_str:
         dpg.set_value("result_text", "Please enter destination address and amount.")
